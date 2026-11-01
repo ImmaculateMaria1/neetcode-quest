@@ -569,7 +569,7 @@ async function syncGitHub(manual){
   finally { syncing = false; renderSyncLine(); }
 }
 function renderSyncLine(){ const el = $("#syncLine"); if (!el) return;
-  el.classList.toggle("hidden", !S.gh.repo); $("#roadSync").classList.toggle("hidden", !S.gh.repo);
+  $("#ghState").textContent = S.gh.repo ? "on" : "off"; el.classList.toggle("hidden", !S.gh.repo); $("#roadSync").classList.toggle("hidden", !S.gh.repo);
   if (!S.gh.repo){ el.innerHTML = ""; return; }
   const st = S.gh.status || "", ago = S.gh.lastSync ? Math.round((Date.now()-S.gh.lastSync)/60000) : null;
   const dot = st.startsWith("err") ? "err" : (st==="ok" ? "ok" : "");

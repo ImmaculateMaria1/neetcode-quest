@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeetCode Quest — ADHD Focus Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0f1d; --panel:#171a2f; --panel2:#1f2340; --line:#2b3058;
+  --text:#eef0ff; --muted:#9aa0c7; --violet:#8b5cf6; --violet2:#a78bfa;
+  --mint:#34d399; --amber:#fbbf24; --pink:#f472b6; --sky:#38bdf8; --red:#fb7185;
+  --r:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;}
+body{min-height:100vh;background:
+  radial-gradient(900px 500px at 10% -10%, #2a1f5c55, transparent 60%),
+  radial-gradient(700px 400px at 100% 0%, #0f4c5c44, transparent 60%), var(--bg);}
+button{font-family:inherit;cursor:pointer;border:none;color:inherit}
+input,select,textarea{font-family:inherit;color:var(--text)}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 18px 60px}
+
+/* ---------- Top bar ---------- */
+.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:-.02em}
+.brand .logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--violet),var(--pink));font-size:20px}
+.lvl{flex:1;min-width:220px}
+.lvl-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.lvl-row b{color:var(--text)}
+.bar{height:12px;background:#0b0c18;border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--pink));border-radius:99px;transition:width .6s cubic-bezier(.2,.9,.3,1.2)}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-weight:600}
+.chip small{color:var(--muted);font-weight:500;font-size:12px}
+.chip .big{font-size:18px}
+.iconbtn{background:var(--panel2);border:1px solid var(--line);border-radius:12px;width:40px;height:40px;font-size:18px}
+.iconbtn:hover{border-color:var(--violet)}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:8px;margin:16px 0}
+.tab{background:transparent;border:1px solid var(--line);color:var(--muted);padding:10px 18px;border-radius:999px;font-weight:600;font-size:15px}
+.tab.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.tab:hover:not(.on){color:var(--text);border-color:var(--muted)}
+.view{display:none}.view.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- Layout ---------- */
+.grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card h3{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:8px}
+.stack{display:flex;flex-direction:column;gap:16px}
+
+/* ---------- Focus card ---------- */
+.focus{position:relative;overflow:hidden}
+.now{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.now-info{flex:1;min-width:220px}
+.now-cat{color:var(--muted);font-size:13px;margin-bottom:4px}
+.now-name{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-bottom:10px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px}
+.E{background:#34d39922;color:var(--mint)} .M{background:#fbbf2422;color:var(--amber)} .H{background:#f472b622;color:var(--pink)}
+.btn{background:var(--panel2);border:1px solid var(--line);padding:10px 14px;border-radius:12px;font-weight:600;font-size:14px;transition:transform .1s, border-color .15s}
+.btn:hover{border-color:var(--violet2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--violet);border-color:var(--violet)}
+.btn.primary:hover{background:#7c4ff0}
+.btn.good{background:var(--mint);border-color:var(--mint);color:#06281c}
+.btn.ghost{background:transparent}
+a.btn{display:inline-block;text-decoration:none;color:var(--text)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.empty-now{text-align:center;padding:26px 10px}
+.empty-now .e{font-size:44px}
+.empty-now p{color:var(--muted);margin:6px 0 16px}
+
+/* Timer */
+.timer{position:relative;width:170px;height:170px;flex:none}
+.timer svg{transform:rotate(-90deg)}
+.timer .t{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.timer .t b{font-size:34px;font-family:'JetBrains Mono',monospace}
+.timer .t b{display:block;line-height:1}
+.timer .t small{display:block;color:var(--muted);font-size:12px;margin-top:6px;text-transform:uppercase;letter-spacing:.1em}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.preset{background:var(--panel2);border:1px solid var(--line);padding:7px 12px;border-radius:999px;font-weight:600;font-size:13px}
+.preset.on{border-color:var(--violet2);color:var(--violet2)}
+.preset.starter{border-style:dashed;border-color:var(--mint);color:var(--mint)}
+
+/* Steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:18px}
+.step{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;font-size:14px;font-weight:500}
+.step .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;font-size:13px}
+.step.done{border-color:#34d39966;background:#34d39912}
+.step.done .box{background:var(--mint);border-color:var(--mint);color:#06281c}
+.step.done span:not(.box){text-decoration:line-through;color:var(--muted)}
+.step.next{border-color:var(--violet2);box-shadow:0 0 0 3px #8b5cf622}
+.hint{color:var(--muted);font-size:13px;margin-top:10px}
+.kbd{font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--muted)}
+
+/* Buddy */
+.buddy{display:flex;gap:12px;align-items:flex-start}
+.buddy .face{font-size:40px;line-height:1;animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px) rotate(-4deg)}}
+.bubble{background:var(--panel2);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:10px 14px;font-size:15px;line-height:1.4;flex:1}
+
+/* Drift */
+.drift-btn{width:100%;padding:16px;font-size:17px;font-weight:700;border-radius:14px;background:linear-gradient(135deg,#38bdf833,#8b5cf633);border:1px solid #38bdf866}
+.drift-btn:hover{border-color:var(--sky)}
+.dump{display:flex;gap:8px;margin-top:12px}
+.dump input{flex:1;background:#0b0c18;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+.dump input:focus{outline:none;border-color:var(--violet2)}
+.dumplist{list-style:none;margin:10px 0 0;padding:0;max-height:170px;overflow:auto}
+.dumplist li{display:flex;justify-content:space-between;gap:8px;padding:7px 4px;border-bottom:1px dashed var(--line);font-size:14px}
+.dumplist li button{background:none;color:var(--muted);font-size:13px}
+.dumplist li button:hover{color:var(--mint)}
+
+/* Picker */
+.picker-display{background:#0b0c18;border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center;min-height:86px;display:grid;place-items:center;margin:12px 0}
+.picker-display .pn{font-size:20px;font-weight:700}
+.picker-display .pc{color:var(--muted);font-size:13px}
+.picker-display.spinning .pn{color:var(--violet2)}
+select{background:#0b0c18;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:14px}
+.dchip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;opacity:.45}
+.dchip.on{opacity:1}
+
+/* Daily goal dots */
+.dots{display:flex;gap:6px}
+.dots i{width:14px;height:14px;border-radius:50%;background:#0b0c18;border:2px solid var(--line)}
+.dots i.on{background:var(--mint);border-color:var(--mint);box-shadow:0 0 10px #34d39988}
+
+/* ---------- Roadmap ---------- */
+.road-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.road-head input{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:14px;min-width:240px}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.cat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;transition:border-color .15s, transform .15s}
+.cat:hover{border-color:var(--violet2);transform:translateY(-2px)}
+.cat.open{grid-column:1/-1;cursor:default;transform:none}
+.cat-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.cat-top b{font-size:16px}
+.cat-top span{color:var(--muted);font-size:13px;font-family:'JetBrains Mono',monospace}
+.cat.done{border-color:#34d39977}
+.cat .bar{height:8px}
+.cat .bar>i{background:linear-gradient(90deg,var(--mint),var(--sky))}
+.plist{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px}
+.prob{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 10px;font-size:14px}
+.prob.solved{border-color:#34d39955}
+.prob .nm{flex:1}
+.prob.solved .nm{color:var(--muted)}
+.prob .chk{width:22px;height:22px;border-radius:7px;border:2px solid var(--muted);display:grid;place-items:center;font-size:12px;background:none;flex:none}
+.prob.solved .chk{background:var(--mint);border-color:var(--mint);color:#06281c}
+.prob .go{background:none;color:var(--violet2);font-weight:700;font-size:13px;padding:4px 6px;border-radius:8px}
+.prob .go:hover{background:#8b5cf622}
+.peekmark{font-size:12px;color:var(--amber)}
+
+/* ---------- Wins ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.stat b{display:block;font-size:30px;font-family:'JetBrains Mono',monospace}
+.stat span{color:var(--muted);font-size:13px}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.badge{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;filter:grayscale(1);opacity:.4}
+.badge.got{filter:none;opacity:1;border-color:#fbbf2466;background:linear-gradient(160deg,#fbbf2414,transparent)}
+.badge .bi{font-size:30px}
+.badge b{display:block;font-size:14px;margin-top:6px}
+.badge small{color:var(--muted);font-size:12px}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,14px);grid-auto-columns:14px;justify-content:start;gap:4px;overflow-x:auto;padding-bottom:4px}
+.heat i{width:14px;height:14px;border-radius:4px;background:#0b0c18;border:1px solid var(--line)}
+.heat i.l1{background:#34d39944;border-color:#34d39955}
+.heat i.l2{background:#34d39988;border-color:#34d39999}
+.heat i.l3{background:var(--mint);border-color:var(--mint)}
+textarea{width:100%;background:#0b0c18;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:12px;min-height:80px;font-family:'JetBrains Mono',monospace}
+
+/* ---------- Overlays ---------- */
+.modal-bg{position:fixed;inset:0;background:#05060fcc;backdrop-filter:blur(6px);display:none;place-items:center;z-index:50;padding:20px}
+.modal-bg.on{display:grid;animation:fade .2s}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:26px;max-width:460px;width:100%;text-align:center}
+.modal .big{font-size:56px}
+.modal h2{margin:8px 0 6px;font-size:26px}
+.modal p{color:var(--muted);margin:0 0 18px;line-height:1.5}
+.modal .row{justify-content:center}
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60;align-items:center;pointer-events:none}
+.toast{background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;font-size:15px;box-shadow:0 10px 30px #0008;animation:pop .35s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes pop{from{transform:translateY(16px) scale(.8);opacity:0}}
+.xpfloat{position:fixed;font-weight:800;color:var(--amber);font-size:20px;pointer-events:none;z-index:70;animation:float 1.1s ease-out forwards;text-shadow:0 2px 10px #000}
+@keyframes float{to{transform:translateY(-60px);opacity:0}}
+canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:80}
+
+/* Zen / hyperfocus mode: hide everything but the focus card */
+body.zen .top, body.zen .tabs, body.zen .side, body.zen .hide-zen{display:none!important}
+body.zen .grid{grid-template-columns:1fr;max-width:760px;margin:40px auto 0}
+body.reduce *{animation:none!important;transition:none!important}
+.zen-exit{display:none}
+body.zen .zen-exit{display:inline-block}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand"><div class="logo">⚡</div>NeetCode Quest</div>
+    <div class="lvl">
+      <div class="lvl-row"><span><b id="lvlName">Level 1</b> · <span id="lvlTitle">Array Apprentice</span></span><span class="mono" id="xpText">0 / 100 XP</span></div>
+      <div class="bar"><i id="xpBar"></i></div>
+    </div>
+    <div class="chips">
+      <div class="chip" title="Daily streak"><span class="big">🔥</span><div><span id="streak">0</span><br><small>day streak</small></div></div>
+      <div class="chip" title="Today's goal"><div><div class="dots" id="goalDots"></div><small id="goalText">0 / 2 today</small></div></div>
+      <button class="iconbtn" id="soundBtn" title="Sound on/off">🔊</button>
+      <button class="iconbtn" id="settingsBtn" title="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-view="focus">🎯 Focus</button>
+    <button class="tab" data-view="road">🗺️ Roadmap</button>
+    <button class="tab" data-view="wins">🏆 Wins</button>
+  </nav>
+
+  <!-- ================= FOCUS ================= -->
+  <section class="view on" id="view-focus">
+    <div class="grid">
+      <div class="stack">
+        <div class="card focus" id="focusCard">
+          <h3>🎯 One thing right now <button class="btn ghost zen-exit" id="zenExit" style="margin-left:auto;padding:4px 10px;font-size:12px">Exit hyperfocus</button></h3>
+          <div id="nowArea"></div>
+        </div>
+
+        <div class="card hide-zen">
+          <h3>🎲 Can't decide? Let fate pick</h3>
+          <div class="row">
+            <select id="pickCat"></select>
+            <button class="dchip E on" data-d="E">Easy</button>
+            <button class="dchip M on" data-d="M">Medium</button>
+            <button class="dchip H" data-d="H">Hard</button>
+          </div>
+          <div class="picker-display" id="pickDisplay"><div><div class="pn">Press spin ↓</div><div class="pc">Unsolved problems only</div></div></div>
+          <div class="row">
+            <button class="btn primary" id="spinBtn">🎰 Spin</button>
+            <button class="btn" id="pickStart" disabled>Start this one →</button>
+            <button class="btn ghost" id="pickNext">Next unsolved in order</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack side">
+        <div class="card">
+          <div class="buddy"><div class="face" id="buddyFace">🐙</div><div class="bubble" id="buddyMsg">Hey! Pick one problem. Just one. I'll keep you company.</div></div>
+        </div>
+
+        <div class="card">
+          <h3>🦋 Drifted off?</h3>
+          <button class="drift-btn" id="driftBtn">I got distracted — I'm back!</button>
+          <div class="hint">Coming back counts as a win, so you get XP for it. Got a random thought? Park it here and get back to the problem.</div>
+          <form class="dump" id="dumpForm">
+            <label class="sr" for="dumpIn">Brain dump</label>
+            <input id="dumpIn" placeholder="Brain dump… (press B)" autocomplete="off">
+            <button class="btn">Park</button>
+          </form>
+          <ul class="dumplist" id="dumpList"></ul>
+        </div>
+
+        <div class="card">
+          <h3>🔁 Revisit queue</h3>
+          <div id="revisit" class="hint" style="margin-top:0"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ROADMAP ================= -->
+  <section class="view" id="view-road">
+    <div class="road-head">
+      <div><b style="font-size:20px">NeetCode 150</b> <span class="hint" id="roadSum"></span></div>
+      <input id="search" placeholder="🔍 Search problems…" autocomplete="off">
+    </div>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <!-- ================= WINS ================= -->
+  <section class="view" id="view-wins">
+    <div class="stack">
+      <div class="stats" id="stats"></div>
+      <div class="card"><h3>📅 Last 12 weeks</h3><div class="heat" id="heat"></div></div>
+      <div class="card"><h3>🏅 Badges</h3><div class="badges" id="badges"></div></div>
+      <div class="card">
+        <h3>💾 Backup your progress</h3>
+        <p class="hint" style="margin-top:0">Your progress is saved in this browser only. Copy the backup code to keep it safe or move it to another device.</p>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn" id="copyBackup">📋 Copy backup code</button>
+          <button class="btn" id="importBtn">📥 Restore from code</button>
+          <button class="btn ghost" id="resetBtn" style="color:var(--red)">Reset everything</button>
+        </div>
+        <textarea id="backupBox" placeholder="Paste a backup code here, then press Restore"></textarea>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modals -->
+<div class="modal-bg" id="modal"><div class="modal" id="modalBody"></div></div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+/* ==================== DATA: NeetCode 150 ==================== */
+const RAW = {
+ "Arrays & Hashing":["Contains Duplicate|E","Valid Anagram|E","Two Sum|E","Group Anagrams|M","Top K Frequent Elements|M","Encode and Decode Strings|M","Product of Array Except Self|M","Valid Sudoku|M","Longest Consecutive Sequence|M"],
+ "Two Pointers":["Valid Palindrome|E","Two Sum II|M|two-sum-ii-input-array-is-sorted","3Sum|M","Container With Most Water|M","Trapping Rain Water|H"],
+ "Sliding Window":["Best Time to Buy and Sell Stock|E","Longest Substring Without Repeating Characters|M","Longest Repeating Character Replacement|M","Permutation in String|M","Minimum Window Substring|H","Sliding Window Maximum|H"],
+ "Stack":["Valid Parentheses|E","Min Stack|M","Evaluate Reverse Polish Notation|M","Generate Parentheses|M","Daily Temperatures|M","Car Fleet|M","Largest Rectangle in Histogram|H"],
+ "Binary Search":["Binary Search|E","Search a 2D Matrix|M","Koko Eating Bananas|M","Find Minimum in Rotated Sorted Array|M","Search in Rotated Sorted Array|M","Time Based Key-Value Store|M","Median of Two Sorted Arrays|H"],
+ "Linked List":["Reverse Linked List|E","Merge Two Sorted Lists|E","Linked List Cycle|E","Reorder List|M","Remove Nth Node From End of List|M","Copy List with Random Pointer|M","Add Two Numbers|M","Find the Duplicate Number|M","LRU Cache|M","Merge K Sorted Lists|H","Reverse Nodes in K-Group|H"],
+ "Trees":["Invert Binary Tree|E","Maximum Depth of Binary Tree|E","Diameter of Binary Tree|E","Balanced Binary Tree|E","Same Tree|E","Subtree of Another Tree|E","Lowest Common Ancestor of a BST|M|lowest-common-ancestor-of-a-binary-search-tree","Binary Tree Level Order Traversal|M","Binary Tree Right Side View|M","Count Good Nodes in Binary Tree|M","Validate Binary Search Tree|M","Kth Smallest Element in a BST|M","Construct Binary Tree from Preorder and Inorder Traversal|M","Binary Tree Maximum Path Sum|H","Serialize and Deserialize Binary Tree|H"],
+ "Tries":["Implement Trie (Prefix Tree)|M|implement-trie-prefix-tree","Design Add and Search Words Data Structure|M","Word Search II|H"],
+ "Heap / Priority Queue":["Kth Largest Element in a Stream|E","Last Stone Weight|E","K Closest Points to Origin|M","Kth Largest Element in an Array|M","Task Scheduler|M","Design Twitter|M","Find Median from Data Stream|H"],
+ "Backtracking":["Subsets|M","Combination Sum|M","Permutations|M","Subsets II|M","Combination Sum II|M","Word Search|M","Palindrome Partitioning|M","Letter Combinations of a Phone Number|M","N-Queens|H"],
+ "Graphs":["Number of Islands|M","Clone Graph|M","Max Area of Island|M","Pacific Atlantic Water Flow|M","Surrounded Regions|M","Rotting Oranges|M","Walls and Gates|M","Course Schedule|M","Course Schedule II|M","Redundant Connection|M","Number of Connected Components in an Undirected Graph|M","Graph Valid Tree|M","Word Ladder|H"],
+ "Advanced Graphs":["Network Delay Time|M","Min Cost to Connect All Points|M","Cheapest Flights Within K Stops|M","Reconstruct Itinerary|H","Swim in Rising Water|H","Alien Dictionary|H"],
+ "1-D Dynamic Programming":["Climbing Stairs|E","Min Cost Climbing Stairs|E","House Robber|M","House Robber II|M","Longest Palindromic Substring|M","Palindromic Substrings|M","Decode Ways|M","Coin Change|M","Maximum Product Subarray|M","Word Break|M","Longest Increasing Subsequence|M","Partition Equal Subset Sum|M"],
+ "2-D Dynamic Programming":["Unique Paths|M","Longest Common Subsequence|M","Best Time to Buy and Sell Stock with Cooldown|M","Coin Change II|M","Target Sum|M","Interleaving String|M","Edit Distance|M","Longest Increasing Path in a Matrix|H","Distinct Subsequences|H","Burst Balloons|H","Regular Expression Matching|H"],
+ "Greedy":["Maximum Subarray|M","Jump Game|M","Jump Game II|M","Gas Station|M","Hand of Straights|M","Merge Triplets to Form Target Triplet|M","Partition Labels|M","Valid Parenthesis String|M"],
+ "Intervals":["Meeting Rooms|E","Insert Interval|M","Merge Intervals|M","Non-overlapping Intervals|M","Meeting Rooms II|M","Minimum Interval to Include Each Query|H"],
+ "Math & Geometry":["Happy Number|E","Plus One|E","Rotate Image|M","Spiral Matrix|M","Set Matrix Zeroes|M","Pow(x, n)|M","Multiply Strings|M","Detect Squares|M"],
+ "Bit Manipulation":["Single Number|E","Number of 1 Bits|E","Counting Bits|E","Reverse Bits|E","Missing Number|E","Sum of Two Integers|M","Reverse Integer|M"]
+};
+const slugify = s => s.toLowerCase().replace(/[(),']/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const PROBS = []; const BY = {};
+for (const [cat, list] of Object.entries(RAW)) list.forEach((line, i) => {
+  const [name, d, s] = line.split("|");
+  const p = {id: s || slugify(name), name, d, cat, order: PROBS.length};
+  PROBS.push(p); BY[p.id] = p;
+});
+const CATS = Object.keys(RAW);
+const XP_BY_D = {E:20, M:40, H:80};
+
+/* ==================== STATE ==================== */
+const KEY = "neetcode-quest-v1";
+const today = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const dayDiff = (a,b) => Math.round((new Date(b+"T12:00") - new Date(a+"T12:00"))/864e5);
+const fresh = () => ({xp:0, solved:{}, streak:0, best:0, last:null, log:{}, current:null, steps:[], dump:[], refocus:0, focusMin:0, badges:[], sound:true, reduce:false, goal:2});
+let S = fresh();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} };
+// streak decays if a day was missed
+if (S.last && dayDiff(S.last, today()) > 1) { S.streak = 0; save(); }
+
+/* ==================== HELPERS ==================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const lcUrl = id => "https://leetcode.com/problems/" + id + "/";
+const ncUrl = "https://neetcode.io/practice";
+
+function levelInfo(xp){ let lvl=1, need=100, acc=0; while (xp >= acc+need){ acc+=need; lvl++; need = 100 + (lvl-1)*40; } return {lvl, into: xp-acc, need}; }
+const TITLES = ["Array Apprentice","Hash Map Hobbit","Pointer Padawan","Window Wrangler","Stack Stacker","Binary Bard","List Linker","Tree Hugger","Trie Tamer","Heap Hero","Backtrack Bandit","Graph Gremlin","DP Druid","Greedy Goblin","Interval Wizard","Bit Wizard","Algorithm Archmage"];
+
+/* ---------- Sound (WebAudio, tiny) ---------- */
+let AC = null;
+function beep(notes){ if (!S.sound) return; try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); let t = AC.currentTime;
+  notes.forEach(([f,d]) => { const o = AC.createOscillator(), g = AC.createGain(); o.type="triangle"; o.frequency.value=f; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.18,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d+.02); t += d*.75; });
+ }catch(e){} }
+const sfx = { tick:()=>beep([[880,.08]]), xp:()=>beep([[660,.08],[990,.12]]), win:()=>beep([[523,.12],[659,.12],[784,.12],[1047,.3]]), chime:()=>beep([[784,.25],[988,.25],[1175,.45]]), back:()=>beep([[440,.1],[660,.15]]) };
+
+/* ---------- Toasts / XP floats / confetti ---------- */
+function toast(msg){ const t = document.createElement("div"); t.className="toast"; t.textContent=msg; $("#toasts").appendChild(t); setTimeout(()=>t.remove(), 2600); }
+function floatXP(n, el){ const r = (el||$("#xpBar")).getBoundingClientRect(); const f = document.createElement("div"); f.className="xpfloat"; f.textContent="+"+n+" XP"; f.style.left=(r.left+r.width/2-30)+"px"; f.style.top=(r.top-6)+"px"; document.body.appendChild(f); setTimeout(()=>f.remove(),1200); }
+const cv = $("#confetti"), cx = cv.getContext("2d"); let parts = [], raf = null;
+function confetti(n=140){ if (S.reduce) return; cv.width=innerWidth; cv.height=innerHeight; const cols=["#8b5cf6","#f472b6","#34d399","#fbbf24","#38bdf8"];
+  for(let i=0;i<n;i++) parts.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*14-4,s:Math.random()*7+4,c:pick(cols),r:Math.random()*6,vr:(Math.random()-.5)*.3,life:120});
+  if(!raf) loop(); }
+function loop(){ cx.clearRect(0,0,cv.width,cv.height); parts.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life--; cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore();});
+  parts = parts.filter(p=>p.life>0 && p.y<cv.height+20); raf = parts.length ? requestAnimationFrame(loop) : (cx.clearRect(0,0,cv.width,cv.height), null); }
+
+/* ---------- XP ---------- */
+function addXP(n, el){ const before = levelInfo(S.xp).lvl; S.xp += n; save(); floatXP(n, el); sfx.xp(); renderTop();
+  const after = levelInfo(S.xp).lvl; if (after > before){ setTimeout(()=>{ confetti(200); sfx.win(); showModal("🆙", "Level "+after+"!", "You're now a <b>"+TITLES[Math.min(after-1,TITLES.length-1)]+"</b>. Keep going.", [["Let's go","primary",closeModal]]); }, 400); } }
+
+/* ---------- Buddy ---------- */
+const BUDDY = {
+  idle:["Pick one problem. Just one. I'll keep you company.","Small steps still count. Read the problem first, that's all.","Tip: say the brute force out loud before you try to optimize.","You don't need motivation to start. Starting is what brings the motivation.","Stuck for 20 minutes? Peek at the solution. No shame, you still learn from it."],
+  working:["You're doing it! One checkbox at a time.","Draw it out. Tiny examples help a lot.","What would the brute force look like here?","Is there a hash map hiding in this problem? 👀","Breathe. Edge cases: empty input, one element, duplicates."],
+  back:["Welcome back! Noticing you drifted IS the skill. 💪","Hey, you came back. That's what matters.","Back in the zone. Where were we? Check the next step ↓","Every return makes your focus stronger."],
+  solved:["LET'S GOOO 🎉","Another one down! Your brain is getting stronger.","That's a pattern you now own.","Seriously impressive. Water break?"],
+  timer:["Timer's running. It's just you and the problem now.","Phone face down? 📵","Just this one session. You can stop when it ends."]
+};
+const FACES = {idle:"🐙",working:"🐙",back:"🦋",solved:"🥳",timer:"🧘"};
+function say(kind, custom){ $("#buddyFace").textContent = FACES[kind]||"🐙"; $("#buddyMsg").textContent = custom || pick(BUDDY[kind]); }
+
+/* ==================== TOP BAR ==================== */
+function renderTop(){
+  const L = levelInfo(S.xp);
+  $("#lvlName").textContent = "Level " + L.lvl;
+  $("#lvlTitle").textContent = TITLES[Math.min(L.lvl-1, TITLES.length-1)];
+  $("#xpText").textContent = L.into + " / " + L.need + " XP";
+  $("#xpBar").style.width = (L.into/L.need*100) + "%";
+  $("#streak").textContent = S.streak;
+  const t = S.log[today()] || 0;
+  $("#goalDots").innerHTML = Array.from({length:S.goal},(_,i)=>`<i class="${i<t?'on':''}"></i>`).join("");
+  $("#goalText").textContent = t + " / " + S.goal + " today" + (t>=S.goal?" ✓":"");
+  $("#soundBtn").textContent = S.sound ? "🔊" : "🔇";
+  document.body.classList.toggle("reduce", !!S.reduce);
+}
+
+/* ==================== FOCUS CARD ==================== */
+const STEPS = ["Read it twice","Write 2 examples","Say the brute force","Find the pattern","Code it","Test edge cases"];
+let timer = {total:25*60, left:25*60, running:false, end:0, id:null};
+
+function renderNow(){
+  const p = S.current && BY[S.current];
+  if (!p){
+    $("#nowArea").innerHTML = `<div class="empty-now"><div class="e">🌱</div><h2 style="margin:6px 0">Nothing picked yet</h2><p>Spin the wheel below, take the next problem in order, or choose one from the Roadmap.</p>
+      <div class="row" style="justify-content:center"><button class="btn primary" onclick="startNext()">▶ Give me the next one</button><button class="btn" onclick="spin()">🎰 Surprise me</button></div></div>`;
+    return;
+  }
+  if (S.steps.length !== STEPS.length) S.steps = STEPS.map(()=>false);
+  const nextIdx = S.steps.indexOf(false);
+  const C = 2*Math.PI*74;
+  $("#nowArea").innerHTML = `
+    <div class="now">
+      <div class="now-info">
+        <div class="now-cat">${esc(p.cat)} · #${p.order+1} of 150</div>
+        <div class="now-name">${esc(p.name)}</div>
+        <div class="row" style="margin-bottom:6px"><span class="pill ${p.d}">${{E:"Easy",M:"Medium",H:"Hard"}[p.d]}</span><span class="hint" style="margin:0">+${XP_BY_D[p.d]} XP on solve</span></div>
+        <div class="row" style="margin-top:12px">
+          <a class="btn" href="${lcUrl(p.id)}" target="_blank" rel="noopener">Open on LeetCode ↗</a>
+          <a class="btn ghost" href="${ncUrl}" target="_blank" rel="noopener">NeetCode ↗</a>
+          <button class="btn ghost hide-zen" id="zenBtn" title="Hide everything else">🧘 Hyperfocus mode</button>
+        </div>
+      </div>
+      <div>
+        <div class="timer">
+          <svg width="170" height="170"><circle cx="85" cy="85" r="74" stroke="#0b0c18" stroke-width="12" fill="none"/>
+          <circle id="ring" cx="85" cy="85" r="74" stroke="url(#g)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="0"/>
+          <defs><linearGradient id="g"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#f472b6"/></linearGradient></defs></svg>
+          <div class="t"><div><b id="tLeft">25:00</b><small id="tLabel">focus</small></div></div>
+        </div>
+        <div class="row" style="justify-content:center;margin-top:8px">
+          <button class="btn primary" id="tPlay">▶ Start</button><button class="btn ghost" id="tReset" title="Reset">↺</button>
+        </div>
+      </div>
+    </div>
+    <div class="presets">
+      <button class="preset starter" data-m="5" title="Low-pressure start">🐣 Just 5 min</button>
+      <button class="preset" data-m="15">15</button><button class="preset" data-m="25">25</button><button class="preset" data-m="45">45</button>
+    </div>
+    <div class="steps">${STEPS.map((s,i)=>`<button class="step ${S.steps[i]?'done':''} ${i===nextIdx?'next':''}" data-i="${i}"><span class="box">${S.steps[i]?'✓':i+1}</span><span>${s}</span></button>`).join("")}</div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn good" id="solvedBtn">✅ Solved it!</button>
+      <button class="btn" id="peekBtn" title="Saw the solution, still counts">👀 Solved with help</button>
+      <button class="btn ghost" id="parkBtn">⏭ Skip for now</button>
+    </div>
+    <div class="hint"><span class="kbd">Space</span> start/pause timer · <span class="kbd">D</span> I drifted · <span class="kbd">B</span> brain dump · <span class="kbd">Esc</span> leave hyperfocus</div>`;
+
+  $$(".step").forEach(b => b.onclick = () => { const i=+b.dataset.i; S.steps[i] = !S.steps[i]; save();
+    if (S.steps[i]) { addXP(3, b); if (S.steps.every(Boolean)) say("working","All steps done! Hit Solved when it passes. 🚀"); else say("working"); }
+    renderNow(); });
+  $$(".preset").forEach(b => { if (+b.dataset.m*60 === timer.total) b.classList.add("on"); b.onclick = () => { setTimer(+b.dataset.m); if (+b.dataset.m===5) { startTimer(); say("timer","Just 5 minutes. If you want to stop after that, you can. (You probably won't.)"); } }; });
+  $("#tPlay").onclick = toggleTimer; $("#tReset").onclick = () => setTimer(timer.total/60);
+  $("#solvedBtn").onclick = () => solve(false); $("#peekBtn").onclick = () => solve(true);
+  $("#parkBtn").onclick = () => { S.current=null; S.steps=[]; save(); renderNow(); say("idle","Skipping is fine. Pick something that feels doable right now."); };
+  $("#zenBtn").onclick = () => { document.body.classList.add("zen"); toast("🧘 Hyperfocus on. Press Esc to exit."); };
+  drawTimer();
+}
+
+function setFocus(id){ S.current=id; S.steps=STEPS.map(()=>false); save(); switchView("focus"); renderNow(); say("working","Okay: "+BY[id].name+". Step 1 is just reading it. That's it."); window.scrollTo({top:0,behavior:"smooth"}); }
+function nextUnsolved(){ return PROBS.find(p => !S.solved[p.id] && p.id !== S.current) || null; }
+function startNext(){ const p = nextUnsolved(); if (p) setFocus(p.id); else toast("You've solved all 150! 👑"); }
+
+/* ---------- Timer ---------- */
+function setTimer(min){ clearInterval(timer.id); timer = {total:min*60, left:min*60, running:false, end:0, id:null}; document.title = "NeetCode Quest"; renderNow(); }
+function startTimer(){ if (timer.running) return; timer.running=true; timer.end = Date.now()+timer.left*1000; timer.id = setInterval(tickTimer, 250); sfx.tick(); if (Math.random()<.6) say("timer"); drawTimer(); }
+function toggleTimer(){ if (!S.current) return; if (timer.running){ timer.running=false; clearInterval(timer.id); timer.left = Math.max(0, Math.round((timer.end-Date.now())/1000)); drawTimer(); } else startTimer(); }
+function tickTimer(){ timer.left = Math.max(0, Math.round((timer.end-Date.now())/1000)); drawTimer(); if (timer.left<=0) timerDone(); }
+function drawTimer(){ const el = $("#tLeft"); if (!el) return; const m = Math.floor(timer.left/60), s = timer.left%60; const str = String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+  el.textContent = str; $("#tLabel").textContent = timer.running ? "focusing" : (timer.left<timer.total ? "paused" : "ready");
+  const C = 2*Math.PI*74; $("#ring").setAttribute("stroke-dashoffset", C*(1-timer.left/timer.total));
+  $("#tPlay").textContent = timer.running ? "⏸ Pause" : (timer.left<timer.total ? "▶ Resume" : "▶ Start");
+  document.title = timer.running ? "⏳ "+str+" · NeetCode Quest" : "NeetCode Quest"; }
+function timerDone(){ clearInterval(timer.id); timer.running=false; const mins = Math.round(timer.total/60); S.focusMin += mins; save(); sfx.chime(); addXP(mins>=25?20:10); checkBadges();
+  showModal("⏰","Session complete!", `${mins} minutes of focus, nicely done. Your brain needs a short reset now.<br><br>Ideas: <b>${pick(["stand up and stretch","get a glass of water","walk to a window","10 jumping jacks","shake out your hands","look at something far away for 20s"])}</b>`,
+    [["☕ 5-min break","primary",()=>{closeModal(); setTimer(5); $("#tLabel").textContent="break"; startTimer(); say("idle","Break time! Step away from the screen. I'll ping you.");}],["Keep going","",()=>{closeModal(); setTimer(mins);}]]);
+  timer.left = 0; drawTimer(); }
+
+/* ---------- Solve ---------- */
+function solve(peeked){
+  const id = S.current; if (!id) return; const p = BY[id];
+  const firstTime = !S.solved[id];
+  S.solved[id] = {date: today(), peeked, revisit: peeked};
+  const t = today();
+  if (S.last !== t){ S.streak = (S.last && dayDiff(S.last,t)===1) ? S.streak+1 : 1; S.last = t; S.best = Math.max(S.best, S.streak); }
+  S.log[t] = (S.log[t]||0) + 1;
+  let xp = firstTime ? XP_BY_D[p.d] : 10; if (peeked) xp = Math.round(xp/2);
+  const hitGoal = S.log[t] === S.goal;
+  S.current = null; S.steps = []; save();
+  confetti(peeked?90:180); sfx.win(); addXP(xp + (hitGoal?25:0));
+  say("solved");
+  const next = nextUnsolved();
+  showModal(peeked?"🧠":"🎉", peeked?"Learned it!":"Solved!", `<b>${esc(p.name)}</b> is done.${peeked?" Since you had help, it goes into your revisit queue so it sticks.":""}${hitGoal?"<br><br>🎯 <b>Daily goal hit!</b> +25 bonus XP":""}<br><br>${S.log[t]>=S.goal?"You can stop here and still feel good about today. Or keep the streak going.":"Ride the momentum?"}`,
+    [[next?"▶ Next: "+next.name:"👑 All done","primary",()=>{closeModal(); if(next) setFocus(next.id);}],["Take a break","",()=>{closeModal(); renderNow();}]]);
+  checkBadges(); renderAll();
+}
+
+/* ---------- Drift / brain dump ---------- */
+function drifted(){ S.refocus++; save(); sfx.back(); addXP(2, $("#driftBtn")); say("back"); checkBadges();
+  if (S.current){ const n = S.steps.indexOf(false); if (n>=0) setTimeout(()=>say("back","You're on step "+(n+1)+": \""+STEPS[n]+"\". Just do that one."),1800); } }
+function renderDump(){ $("#dumpList").innerHTML = S.dump.length ? S.dump.map((d,i)=>`<li><span>💭 ${esc(d)}</span><button data-i="${i}" title="Done / dismiss">✓ done</button></li>`).join("") : `<li style="color:var(--muted);border:none">Nothing parked. Your head is clear ✨</li>`;
+  $$("#dumpList button").forEach(b => b.onclick = () => { S.dump.splice(+b.dataset.i,1); save(); renderDump(); }); }
+$("#dumpForm").onsubmit = e => { e.preventDefault(); const v = $("#dumpIn").value.trim(); if (!v) return; S.dump.unshift(v); $("#dumpIn").value=""; save(); renderDump(); addXP(1, $("#dumpIn")); say("back","Parked it. It'll be here later. Back to the problem. 🧭"); $("#dumpIn").blur(); };
+$("#driftBtn").onclick = drifted;
+
+/* ---------- Revisit ---------- */
+function renderRevisit(){ const r = Object.entries(S.solved).filter(([id,v])=>v.revisit && BY[id]).sort((a,b)=>a[1].date.localeCompare(b[1].date));
+  $("#revisit").innerHTML = r.length ? r.slice(0,6).map(([id,v])=>{ const days = dayDiff(v.date,today()); const ready = days>=3;
+    return `<div class="prob" style="margin-bottom:6px"><span class="pill ${BY[id].d}">${BY[id].d}</span><span class="nm">${esc(BY[id].name)}<br><small style="color:${ready?'var(--mint)':'var(--muted)'}">${ready?"Ready to retry":"Retry in "+(3-days)+"d"}</small></span><button class="go" data-id="${id}">${ready?'Retry':'Early'}</button></div>`; }).join("")
+    : "Problems you solve with help show up here, so you can retry them 3 days later without looking.";
+  $$("#revisit .go").forEach(b => b.onclick = () => { const s = S.solved[b.dataset.id]; s.revisit=false; save(); setFocus(b.dataset.id); }); }
+
+/* ---------- Picker ---------- */
+let pickDiffs = new Set(["E","M"]), picked = null, spinning = false;
+$("#pickCat").innerHTML = `<option value="">All topics</option>` + CATS.map(c=>`<option>${esc(c)}</option>`).join("");
+$$(".dchip").forEach(b => b.onclick = () => { const d=b.dataset.d; pickDiffs.has(d)?pickDiffs.delete(d):pickDiffs.add(d); b.classList.toggle("on", pickDiffs.has(d)); });
+function pool(){ const c = $("#pickCat").value; return PROBS.filter(p => !S.solved[p.id] && pickDiffs.has(p.d) && (!c || p.cat===c)); }
+function spin(){ if (spinning) return; const P = pool(); if (!P.length){ toast("No unsolved problems match those filters"); return; }
+  switchView("focus"); spinning = true; const disp = $("#pickDisplay"); disp.classList.add("spinning"); let n = 0, delay = 40; const final = pick(P);
+  const step = () => { const p = n < 18 ? pick(P) : final; disp.innerHTML = `<div><div class="pn">${esc(p.name)}</div><div class="pc"><span class="pill ${p.d}">${p.d}</span> ${esc(p.cat)}</div></div>`; if (n<18) sfx.tick();
+    n++; if (n <= 18){ delay *= 1.15; setTimeout(step, delay); } else { spinning=false; disp.classList.remove("spinning"); picked = final; $("#pickStart").disabled = false; sfx.xp(); say("idle","The wheel picked "+final.name+". Want to give it a go?"); } };
+  step(); }
+$("#spinBtn").onclick = spin;
+$("#pickStart").onclick = () => { if (picked) { setFocus(picked.id); $("#pickStart").disabled = true; } };
+$("#pickNext").onclick = startNext;
+
+/* ==================== ROADMAP ==================== */
+let openCat = null;
+function renderRoad(){
+  const q = $("#search").value.trim().toLowerCase();
+  const total = Object.keys(S.solved).filter(id=>BY[id]).length;
+  $("#roadSum").textContent = `· ${total}/150 solved`;
+  $("#cats").innerHTML = CATS.map(c => {
+    const ps = PROBS.filter(p=>p.cat===c && (!q || p.name.toLowerCase().includes(q)));
+    if (q && !ps.length) return "";
+    const all = PROBS.filter(p=>p.cat===c), done = all.filter(p=>S.solved[p.id]).length;
+    const open = q || openCat===c;
+    return `<div class="cat ${open?'open':''} ${done===all.length?'done':''}" data-c="${esc(c)}">
+      <div class="cat-top"><b>${done===all.length?'✅ ':''}${esc(c)}</b><span>${done}/${all.length}</span></div>
+      <div class="bar"><i style="width:${done/all.length*100}%"></i></div>
+      ${open ? `<div class="plist">${ps.map(p=>{ const s=S.solved[p.id]; return `<div class="prob ${s?'solved':''}"><button class="chk" data-id="${p.id}" title="Toggle solved">${s?'✓':''}</button><span class="pill ${p.d}">${p.d}</span><span class="nm">${esc(p.name)} ${s&&s.peeked?'<span class="peekmark" title="solved with help">👀</span>':''}</span><button class="go" data-focus="${p.id}">Focus →</button></div>`; }).join("")}</div>` : ""}
+    </div>`; }).join("");
+  $$(".cat").forEach(el => el.onclick = e => { if (e.target.closest(".prob")) return; const c = el.dataset.c; openCat = openCat===c ? null : c; renderRoad(); });
+  $$(".chk").forEach(b => b.onclick = e => { e.stopPropagation(); const id=b.dataset.id;
+    if (S.solved[id]) { delete S.solved[id]; save(); renderAll(); }
+    else { S.solved[id] = {date:today(), peeked:false, revisit:false}; save(); addXP(5, b); toast("Marked as solved (+5 XP; use Focus mode for full XP)"); checkBadges(); renderAll(); } });
+  $$("[data-focus]").forEach(b => b.onclick = e => { e.stopPropagation(); setFocus(b.dataset.focus); });
+}
+$("#search").oninput = renderRoad;
+
+/* ==================== WINS ==================== */
+const BADGES = [
+  ["first","🩸","First Blood","Solve your first problem", s=>solvedN(s)>=1],
+  ["ten","🔟","Double Digits","Solve 10 problems", s=>solvedN(s)>=10],
+  ["fifty","🚀","Halfway-ish","Solve 50 problems", s=>solvedN(s)>=50],
+  ["all","👑","NeetCode Royalty","Solve all 150", s=>solvedN(s)>=150],
+  ["hard","🌶️","Spicy","Solve a Hard problem", s=>Object.keys(s.solved).some(id=>BY[id]&&BY[id].d==="H")],
+  ["s3","🔥","On Fire","3-day streak", s=>s.best>=3],
+  ["s7","☄️","Unstoppable","7-day streak", s=>s.best>=7],
+  ["back5","🦋","Boomerang","Come back from distraction 5 times", s=>s.refocus>=5],
+  ["back25","🧲","Focus Magnet","Come back from distraction 25 times", s=>s.refocus>=25],
+  ["min60","⏳","Deep Diver","60 total focus minutes", s=>s.focusMin>=60],
+  ["min300","🌊","Flow State","300 total focus minutes", s=>s.focusMin>=300],
+  ["cat","🗂️","Topic Cleared","Finish a whole topic", s=>CATS.some(c=>PROBS.filter(p=>p.cat===c).every(p=>s.solved[p.id]))],
+];
+const solvedN = s => Object.keys(s.solved).filter(id=>BY[id]).length;
+function checkBadges(){ BADGES.forEach(([id,ic,nm,desc,test]) => { if (!S.badges.includes(id) && test(S)){ S.badges.push(id); save(); setTimeout(()=>{ toast(ic+" Badge unlocked: "+nm); sfx.win(); }, 900); } }); }
+function renderWins(){
+  const n = solvedN(S), helped = Object.values(S.solved).filter(v=>v.peeked).length;
+  $("#stats").innerHTML = [[n,"problems solved"],[S.streak+" 🔥","current streak"],[S.best,"best streak"],[S.focusMin,"focus minutes"],[S.refocus,"times you came back"],[S.xp,"total XP"]].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+  const cells = []; const now = new Date(); const start = new Date(now); start.setDate(now.getDate() - 83 - now.getDay());
+  for (let i=0;i<84+now.getDay()+1;i++){ const d = new Date(start); d.setDate(start.getDate()+i); const k = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); const v = S.log[k]||0; cells.push(`<i class="${v>=3?'l3':v==2?'l2':v==1?'l1':''}" title="${k}: ${v} solved"></i>`); }
+  $("#heat").innerHTML = cells.join("");
+  $("#badges").innerHTML = BADGES.map(([id,ic,nm,desc])=>`<div class="badge ${S.badges.includes(id)?'got':''}"><div class="bi">${ic}</div><b>${nm}</b><small>${desc}</small></div>`).join("");
+}
+$("#copyBackup").onclick = async () => { const code = btoa(unescape(encodeURIComponent(JSON.stringify(S)))); $("#backupBox").value = code; try { await navigator.clipboard.writeText(code); toast("📋 Backup copied!"); } catch(e){ $("#backupBox").select(); toast("Select the code and copy it (Ctrl/Cmd+C)"); } };
+$("#importBtn").onclick = () => { try { const data = JSON.parse(decodeURIComponent(escape(atob($("#backupBox").value.trim())))); S = Object.assign(fresh(), data); save(); renderAll(); toast("✅ Progress restored"); } catch(e){ toast("That backup code didn't work"); } };
+$("#resetBtn").onclick = () => showModal("⚠️","Reset everything?","This wipes all XP, streaks and solved problems in this browser. Copy a backup first if you might want them back.",[["Yes, reset","",()=>{ S = fresh(); save(); closeModal(); renderAll(); toast("Fresh start 🌱"); }],["Cancel","primary",closeModal]]);
+
+/* ==================== MODAL ==================== */
+function showModal(icon, title, html, buttons){ $("#modalBody").innerHTML = `<div class="big">${icon}</div><h2>${title}</h2><p>${html}</p><div class="row"></div>`;
+  const row = $("#modalBody .row"); buttons.forEach(([label, cls, fn]) => { const b = document.createElement("button"); b.className = "btn "+cls; b.textContent = label; b.onclick = fn; row.appendChild(b); });
+  $("#modal").classList.add("on"); setTimeout(()=>{ const b=row.querySelector("button"); b && b.focus(); }, 50); }
+function closeModal(){ $("#modal").classList.remove("on"); }
+$("#modal").onclick = e => { if (e.target.id==="modal") closeModal(); };
+
+$("#settingsBtn").onclick = () => { showModal("⚙️","Settings", `
+  <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--text)">Daily goal (problems) <select id="setGoal">${[1,2,3,4,5].map(n=>`<option ${n===S.goal?'selected':''}>${n}</option>`).join("")}</select></label>
+  <label style="display:flex;justify-content:space-between;align-items:center;color:var(--text)">Reduce motion (no confetti/animations) <input type="checkbox" id="setReduce" ${S.reduce?'checked':''}></label>`,
+  [["Save","primary",()=>{ S.goal = +$("#setGoal").value; S.reduce = $("#setReduce").checked; save(); closeModal(); renderTop(); toast("Saved"); }]]); };
+$("#soundBtn").onclick = () => { S.sound = !S.sound; save(); renderTop(); if (S.sound) sfx.xp(); };
+
+/* ==================== NAV + KEYS ==================== */
+function switchView(v){ $$(".tab").forEach(t=>t.classList.toggle("on", t.dataset.view===v)); $$(".view").forEach(s=>s.classList.toggle("on", s.id==="view-"+v)); if (v==="road") renderRoad(); if (v==="wins") renderWins(); }
+$$(".tab").forEach(t => t.onclick = () => switchView(t.dataset.view));
+$("#zenExit").onclick = () => document.body.classList.remove("zen");
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape"){ if ($("#modal").classList.contains("on")) closeModal(); else document.body.classList.remove("zen"); return; }
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || $("#modal").classList.contains("on")) return;
+  if (e.code === "Space"){ e.preventDefault(); toggleTimer(); }
+  else if (e.key.toLowerCase() === "d") drifted();
+  else if (e.key.toLowerCase() === "b"){ e.preventDefault(); document.body.classList.remove("zen"); switchView("focus"); $("#dumpIn").focus(); }
+});
+
+function renderAll(){ renderTop(); renderNow(); renderDump(); renderRevisit(); renderRoad(); renderWins(); }
+renderAll();
+if (S.current) say("working","Welcome back! You were on "+BY[S.current].name+". Pick up where you left off.");
+else if ((S.log[today()]||0) >= S.goal) say("idle","You already hit today's goal. Anything more is a bonus. 🌟");
+</script>
+</body>
+</html>

@@ -57,7 +57,7 @@ const fresh = () => ({
   quest:{date:null, id:null, done:false},
   noiseVol:0.35, noiseType:"brown",
   lastBackup:null, backupNag:null,
-  gh:{repo:"ImmaculateMaria1/neetcode-submissions", auto:true, lastSync:0, map:{}, latest:{}, unmatched:[], status:""}
+  gh:{repo:"", auto:false, lastSync:0, map:{}, latest:{}, unmatched:[], status:""}
 });
 let S = fresh();
 try {
@@ -65,6 +65,13 @@ try {
   if (raw) { const d = JSON.parse(raw); const f = fresh(); S = Object.assign(f, d); S.pomo = Object.assign(f.pomo, d.pomo||{}); S.gh = Object.assign(f.gh, d.gh||{}); S.timer = Object.assign(f.timer, d.timer||{}); }
 } catch(e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} };
+// One-time switch: GitHub/NeetCode auto-detect is now OFF unless turned on in Settings.
+let importedOnMigrate = [];
+if (!S.ghOffV2){
+  S.gh.repo = ""; S.gh.auto = false; S.gh.latest = {}; S.gh.unmatched = []; S.gh.status = ""; S.ghOffV2 = true;
+  importedOnMigrate = Object.keys(S.solved).filter(id => S.solved[id].src === "neetcode");
+  save();
+}
 
 /* ==================== HELPERS ==================== */
 const $ = s => document.querySelector(s);
@@ -125,8 +132,9 @@ function addXP(n, el){ if (!n) return; const before = levelInfo(S.xp).lvl; S.xp 
 let modalQ = [], modalCur = null;
 function showModal(m){ if (modalCur){ modalQ.push(m); return; } modalCur = m;
   $("#modalBody").className = "modal" + (m.wide ? " wide" : "");
-  $("#modalBody").innerHTML = (m.icon?`<div class="big">${m.icon}</div>`:"") + (m.title?`<h2>${m.title}</h2>`:"") + `<div class="msg">${m.html||""}</div><div class="row actions"></div>`;
+  $("#modalBody").innerHTML = `<button class="mclose" id="mClose" aria-label="Close" title="Close (Esc)">✕</button>` + (m.icon?`<div class="big">${m.icon}</div>`:"") + (m.title?`<h2>${m.title}</h2>`:"") + `<div class="msg">${m.html||""}</div><div class="row actions"></div>`;
   const row = $("#modalBody .actions");
+  $("#mClose").onclick = dismissModal;
   (m.buttons||[]).forEach(([label, cls, fn]) => { const b = document.createElement("button"); b.className = "btn "+(cls||""); b.textContent = label; b.onclick = fn; row.appendChild(b); });
   $("#modal").classList.add("on"); if (m.onOpen) m.onOpen();
   setTimeout(()=>{ const b=row.querySelector("button"); if (b && !$("#modalBody textarea:focus, #modalBody input:focus")) b.focus(); }, 60); }
@@ -561,7 +569,8 @@ async function syncGitHub(manual){
   finally { syncing = false; renderSyncLine(); }
 }
 function renderSyncLine(){ const el = $("#syncLine"); if (!el) return;
-  if (!S.gh.repo){ el.innerHTML = `<span class="dot"></span> NeetCode auto-detect is off · <button class="btn ghost sm" id="syncSet">Set up</button>`; $("#syncSet").onclick = openSettings; return; }
+  el.classList.toggle("hidden", !S.gh.repo); $("#roadSync").classList.toggle("hidden", !S.gh.repo);
+  if (!S.gh.repo){ el.innerHTML = ""; return; }
   const st = S.gh.status || "", ago = S.gh.lastSync ? Math.round((Date.now()-S.gh.lastSync)/60000) : null;
   const dot = st.startsWith("err") ? "err" : (st==="ok" ? "ok" : "");
   const msg = st==="syncing" ? "Checking GitHub…" : st.startsWith("err") ? esc(st.slice(4)) : `Submit on NeetCode and it's auto-detected here${ago!==null?` · checked ${ago<1?"just now":ago+" min ago"}`:""}`;
@@ -681,3 +690,8 @@ if (S.current) say("working","Welcome back! You were on "+BY[S.current].name+". 
 else if ((S.log[today()]||0) >= S.goal) say("idle","You already hit today's goal. Anything more is a bonus. 🌟");
 else if (dueIds().length) say("review", `${dueIds().length} memory card${dueIds().length>1?"s":""} due. A quick review is an easy way to start.`);
 if (S.gh.repo && S.gh.auto) setTimeout(()=>syncGitHub(false), 1200);
+if (importedOnMigrate.length){
+  const n = importedOnMigrate.length;
+  showModal({icon:"🔕", title:"GitHub detection is off", html:`The dashboard no longer reads your NeetCode/GitHub progress.<br><br>Earlier it auto-imported <b>${n}</b> problem${n>1?"s":""}: <span class="hint">${importedOnMigrate.slice(0,10).map(id=>esc(BY[id].name)).join(" · ")}${n>10?" …":""}</span><br><br>Remove ${n>1?"them":"it"} so you start fresh?`,
+    buttons:[[`Remove ${n>1?"them":"it"}`,"primary",()=>{ importedOnMigrate.forEach(id=>{ delete S.solved[id]; delete S.srs[id]; }); save(); closeModal(); renderAll(); toast("Removed. Fresh start 🌱"); }],["Keep them","",closeModal]]});
+}

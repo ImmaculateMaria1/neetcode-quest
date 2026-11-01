@@ -23,7 +23,7 @@ After every solve, a Java memory card pops up with:
 - a **Java toolkit**: the data structures and methods you'd actually use (`ArrayDeque`, `map.merge`, `PriorityQueue` comparators…)
 - **time and space complexity**, plus why
 - **your own one-liner** ("The trick was…")
-- **your actual NeetCode submission**, pulled from GitHub
+- **your actual NeetCode submission**, if you turn on GitHub detection
 
 ### 🧠 Test my memory (spaced repetition)
 Solved problems come back for quick reviews after 1 → 3 → 7 → 14 → 30 → 60 days. Each review is one of three quiz types:
@@ -33,8 +33,8 @@ Solved problems come back for quick reviews after 1 → 3 → 7 → 14 → 30 �
 
 Remember it and the gap grows. Forget it and it comes back tomorrow.
 
-### 🔄 NeetCode auto-detect
-NeetCode's GitHub Sync pushes your submissions to a public repo (default: `ImmaculateMaria1/neetcode-submissions`). The dashboard checks that repo when you switch back to the tab. When a new submission shows up, the problem is marked solved and its memory card pops up automatically. You can change the repo in ⚙️ Settings.
+### 🔄 NeetCode auto-detect (optional, off by default)
+The dashboard does **not** read your NeetCode or GitHub progress unless you turn it on. To turn it on, open ⚙️ Settings and enter the public repo that NeetCode's GitHub Sync pushes to. New submissions will then be marked solved and show their memory card automatically.
 
 ### 🏆 Motivation that lasts
 - XP, levels, a daily goal and 18 badges

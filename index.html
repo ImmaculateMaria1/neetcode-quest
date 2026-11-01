@@ -237,7 +237,9 @@ textarea{width:100%;background:var(--ink);border:1px solid var(--line);border-ra
 /* Overlays */
 .modal-bg{position:fixed;inset:0;background:#05060fcc;backdrop-filter:blur(6px);display:none;place-items:center;z-index:50;padding:20px;overflow-y:auto}
 .modal-bg.on{display:grid;animation:fade .2s}
-.modal{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:26px;max-width:460px;width:100%;text-align:center;margin:auto}
+.modal{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:26px;max-width:460px;width:100%;text-align:center;margin:auto}
+.mclose{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-size:16px;font-weight:700;display:grid;place-items:center;z-index:2}
+.mclose:hover{color:var(--text);border-color:var(--violet2)}
 .modal.wide{max-width:660px}
 .modal .big{font-size:52px;line-height:1.1}
 .modal h2{margin:8px 0 6px;font-size:26px}
